@@ -1,37 +1,15 @@
-// Checkout is handled entirely by Printful's embeddable "Buy" widget, not our
-// own code. Once a product is synced in the Printful store (dashboard.printful.com/
-// dashboard/sync?store=17170069), grab its embed snippet from the product's
-// "Embed" button and paste the full snippet (script + container markup) as
-// `embedCode` below. Products with `embedCode: null` show a "Coming Soon" state.
+// Checkout happens entirely on Printful's own Quick Store (mcmgop.printful.me) —
+// Quick Stores can't be reached through the Printful API, so "Buy" links out
+// to the live product page there rather than a custom checkout on this site.
 export const products = [
   {
     id: "hoodie",
-    name: "Slate Blue Hoodie",
-    description: "Comfortable pullover hoodie featuring our signature River Region logo.",
-    embedCode: null,
-  },
-  {
-    id: "tshirt",
-    name: "Classic White T-Shirt",
-    description: "Premium cotton tee with bold logo design, perfect for rallies and events.",
-    embedCode: null,
-  },
-  {
-    id: "button-up",
-    name: "Denim Button-Up Shirt",
-    description: "Professional denim work shirt with embroidered logo on chest.",
-    embedCode: null,
-  },
-  {
-    id: "cap",
-    name: "White Baseball Cap",
-    description: "Classic adjustable cap with embroidered River Region Minority GOP logo.",
-    embedCode: null,
-  },
-  {
-    id: "polo",
-    name: "Golf Polo",
-    description: "Premium golf polo with embroidered logo, perfect for the course.",
-    embedCode: null,
+    name: "Unisex Full Zip Hoodie",
+    description:
+      "A heavyweight full zip hoodie designed for everyday comfort with a clean, modern look. Made from soft 10 oz fleece, it features a structured unisex fit, a sleek silver metal zipper, and a no-drawcord design for a streamlined finish.",
+    priceCents: 5500,
+    colors: ["Black", "Navy", "Heather", "Tan", "Cream"],
+    buyUrl: "https://mcmgop.printful.me/product/unisex-full-zip-hoodie",
+    images: ["product-hoodie-front", "product-hoodie-back"],
   },
 ];
