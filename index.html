@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Montgomery River Region Alabama Minority GOP — empowering minority voices, promoting conservative values, and creating opportunities for all Alabamians." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>Montgomery River Region | Alabama Minority GOP</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Static form so Netlify's build-time bot can detect it; the real UI is rendered by React in GetInvolved.jsx -->
+    <form name="get-involved" data-netlify="true" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="tel" name="phone" />
+      <select name="interest">
+        <option value="Membership">Membership</option>
+        <option value="Volunteering">Volunteering</option>
+        <option value="Both">Both</option>
+      </select>
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>
