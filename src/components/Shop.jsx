@@ -1,34 +1,36 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { products } from "../data/products";
 
-function formatPrice(cents) {
-  return `$${(cents / 100).toFixed(2)}`;
+// Renders a third-party embed snippet (markup + <script> tags). Script tags
+// inserted via innerHTML never execute, so each one is recreated manually.
+function PrintfulEmbed({ embedCode }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!embedCode || !container) return;
+
+    container.innerHTML = "";
+    const template = document.createElement("template");
+    template.innerHTML = embedCode.trim();
+
+    Array.from(template.content.childNodes).forEach((node) => {
+      if (node.nodeType === 1 && node.tagName === "SCRIPT") {
+        const script = document.createElement("script");
+        Array.from(node.attributes).forEach((attr) => script.setAttribute(attr.name, attr.value));
+        script.textContent = node.textContent;
+        container.appendChild(script);
+      } else {
+        container.appendChild(node.cloneNode(true));
+      }
+    });
+  }, [embedCode]);
+
+  return <div ref={containerRef} />;
 }
 
 function ProductCard({ product, index }) {
-  const [loading, setLoading] = useState(false);
-  const ready = Boolean(product.printfulVariantId);
-
-  async function handleBuy() {
-    setLoading(true);
-    try {
-      const res = await fetch("/.netlify/functions/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error("Checkout failed", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -37,32 +39,18 @@ function ProductCard({ product, index }) {
       transition={{ duration: 0.6, delay: index * 0.08 }}
       className="overflow-hidden rounded-lg border border-navy/10 shadow-sm"
     >
-      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-offwhite to-navy/5">
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-sm font-medium text-navy-light/60">Mockup coming soon</span>
-        )}
-      </div>
       <div className="p-6">
         <h3 className="font-display text-lg font-bold text-navy-dark">{product.name}</h3>
         <p className="mt-1.5 text-sm text-navy-light">{product.description}</p>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-display text-lg font-bold text-navy">
-            {formatPrice(product.priceCents)}
-          </span>
-          <button
-            type="button"
-            onClick={handleBuy}
-            disabled={!ready || loading}
-            className={`rounded-md px-4 py-2 text-sm font-bold transition-colors ${
-              ready
-                ? "bg-brand-red text-white hover:bg-brand-red-dark"
-                : "cursor-not-allowed bg-navy/10 text-navy-light/50"
-            }`}
-          >
-            {ready ? (loading ? "Loading…" : "Buy Now") : "Coming Soon"}
-          </button>
+
+        <div className="mt-4">
+          {product.embedCode ? (
+            <PrintfulEmbed embedCode={product.embedCode} />
+          ) : (
+            <span className="inline-block rounded-md bg-navy/10 px-4 py-2 text-sm font-bold text-navy-light/50">
+              Coming Soon
+            </span>
+          )}
         </div>
       </div>
     </motion.div>
