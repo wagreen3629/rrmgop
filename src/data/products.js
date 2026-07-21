@@ -12,4 +12,14 @@ export const products = [
     buyUrl: "https://mcmgop.printful.me/product/unisex-full-zip-hoodie",
     images: ["product-hoodie-front", "product-hoodie-back"],
   },
+  {
+    id: "tshirt",
+    name: "Short Sleeve T-shirt",
+    description:
+      "This t-shirt is comfortable, soft, lightweight, and form-fitting. It's an ideal staple piece for any wardrobe!",
+    priceCents: 2200,
+    colors: ["Black", "Midnight Navy", "Red", "Heather Grey", "White"],
+    buyUrl: "https://mcmgop.printful.me/product/short-sleeve-t-shirt",
+    images: ["product-tshirt-1", "product-tshirt-2"],
+  },
 ];
