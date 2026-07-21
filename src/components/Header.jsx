@@ -22,7 +22,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <a href="#home" className="flex items-center gap-3">
           <img src={logo} alt={`${org.name} emblem`} className="h-12 w-12" />
-          <div className="leading-tight">
+          <div className="leading-tight whitespace-nowrap">
             <div
               className={`font-display text-lg font-bold transition-colors ${
                 scrolled ? "text-navy" : "text-white"
@@ -40,12 +40,12 @@ export default function Header() {
           </div>
         </a>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {nav.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className={`text-sm font-semibold transition-colors hover:text-brand-red ${
+              className={`whitespace-nowrap text-sm font-semibold transition-colors hover:text-brand-red ${
                 scrolled ? "text-navy-dark" : "text-white"
               }`}
             >
@@ -56,7 +56,7 @@ export default function Header() {
 
         <a
           href="#get-involved"
-          className="hidden rounded-md bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-red-dark md:inline-block"
+          className="hidden whitespace-nowrap rounded-md bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-red-dark lg:inline-block"
         >
           Get Involved
         </a>
@@ -65,7 +65,7 @@ export default function Header() {
           type="button"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex flex-col gap-1.5 md:hidden"
+          className="flex flex-col gap-1.5 lg:hidden"
         >
           <span className={`h-0.5 w-6 ${scrolled ? "bg-navy-dark" : "bg-white"}`} />
           <span className={`h-0.5 w-6 ${scrolled ? "bg-navy-dark" : "bg-white"}`} />
@@ -79,7 +79,7 @@ export default function Header() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden bg-white shadow-lg md:hidden"
+            className="overflow-hidden bg-white shadow-lg lg:hidden"
           >
             <div className="flex flex-col gap-1 px-6 py-4">
               {nav.map((item) => (
