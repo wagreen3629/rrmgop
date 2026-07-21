@@ -1,17 +1,26 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { nav, org } from "../data/content";
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const { pathname } = useLocation();
+  const hasPhotoHero = pathname === "/";
+  const [scrolledPast, setScrolledPast] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolledPast(window.scrollY > 40);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [pathname]);
+
+  // Pages without a photo hero behind the header need the solid light
+  // styling immediately, since there's no dark image for white text to
+  // read against at the top of the page.
+  const scrolled = scrolledPast || !hasPhotoHero;
 
   return (
     <header
@@ -20,7 +29,7 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        <a href="#home" className="flex items-center gap-3">
+        <a href="/" className="flex items-center gap-3">
           <img src={logo} alt={`${org.name} emblem`} className="h-12 w-12" />
           <div className="leading-tight whitespace-nowrap">
             <div
@@ -55,7 +64,7 @@ export default function Header() {
         </nav>
 
         <a
-          href="#get-involved"
+          href="/#get-involved"
           className="hidden whitespace-nowrap rounded-md bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-red-dark lg:inline-block"
         >
           Get Involved
@@ -93,7 +102,7 @@ export default function Header() {
                 </a>
               ))}
               <a
-                href="#get-involved"
+                href="/#get-involved"
                 onClick={() => setMenuOpen(false)}
                 className="mt-2 rounded-md bg-brand-red px-5 py-2.5 text-center text-sm font-bold text-white"
               >

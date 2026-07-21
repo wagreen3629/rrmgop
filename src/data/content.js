@@ -8,12 +8,12 @@ export const org = {
 };
 
 export const nav = [
-  { label: "Home", href: "#home" },
-  { label: "Our Mission", href: "#mission" },
-  { label: "Values", href: "#values" },
-  { label: "Donate", href: "#donate" },
-  { label: "Shop", href: "#shop" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/" },
+  { label: "Our Mission", href: "/#mission" },
+  { label: "Values", href: "/#values" },
+  { label: "Donate", href: "/#donate" },
+  { label: "Shop", href: "/shop" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export const stats = [
