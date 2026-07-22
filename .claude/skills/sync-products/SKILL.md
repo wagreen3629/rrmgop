@@ -1,6 +1,6 @@
 ---
 name: sync-products
-description: Use this skill whenever the user asks to sync, update, refresh, or check the shop/store/merchandise/products on this site, or mentions adding new products from Printful/the Quick Store. Also trigger it proactively after the user says they've added, uploaded, or synced a new product in the Printful dashboard (mcmgop.printful.me), even if they don't explicitly ask for the site to be updated. The whole point of this skill is that the user should never need to name the product or paste details themselves -- it discovers what's new by comparing the live Quick Store against src/data/products.js and adds whatever it finds.
+description: Use this skill whenever the user asks to sync, update, refresh, or check the shop/store/merchandise/products on this site, or mentions adding, removing, retiring, discontinuing, or deleting products in Printful/the Quick Store. Also trigger it proactively after the user says they've added or removed a product in the Printful dashboard (mcmgop.printful.me), even if they don't explicitly ask for the site to be updated. The whole point of this skill is that the user should never need to name the product or paste details themselves, in either direction -- it discovers both new and removed products by comparing the live Quick Store against src/data/products.js, adds whatever is new, and deletes whatever is gone.
 ---
 
 # Syncing the Printful Quick Store into the site
@@ -25,11 +25,18 @@ and detail-page URL.
 Read `src/data/products.js`. Each existing entry has a `buyUrl` pointing
 at one of these detail pages -- that's the reliable key to match on
 (names can be edited slightly; the URL slug won't change for the same
-product). Any store product whose detail-page URL isn't already someone's
-`buyUrl` in the file is new and needs to be added.
+product). The diff runs both directions:
 
-If nothing is new, say so and stop -- don't re-fetch or re-write products
-that are already represented.
+- **New**: a store product whose detail-page URL isn't any entry's
+  `buyUrl` yet. Handled in Steps 3-5.
+- **Removed**: an entry in `products.js` whose `buyUrl` no longer
+  appears in the live product grid. It was deleted or unpublished in
+  Printful, so it should come out of the site too -- a customer clicking
+  "Buy Now" on something no longer for sale is worse than the product
+  just not being listed. Handled in Step 5a.
+
+If the two lists already match exactly, say so and stop -- don't re-fetch
+or re-write products that are unaffected either way.
 
 ## Step 3: Pull the details for each new product
 
@@ -108,14 +115,34 @@ existing entries:
 }
 ```
 
+## Step 5a: Remove products no longer on the store
+
+For each entry in `products.js` whose `buyUrl` didn't show up in Step 1's
+listing:
+
+1. Remove that object from the `products` array.
+2. Delete its image files under `src/assets/images/` (the filenames are
+   right there in the entry's `images` array). Leaving them behind is
+   harmless to the build but just clutters the repo with files nothing
+   references anymore -- a real sync should leave the site matching the
+   store, not just superset it.
+
+Double-check the `buyUrl` slug against the live grid before deleting
+anything -- Printful sometimes briefly reorders or the listing page can
+be slow to update right after a change in the dashboard, so if a product
+you're about to remove seems like it should still exist, it's worth a
+second look at the store rather than trusting a single pass.
+
 ## Step 6: Verify
 
-Start (or reuse) the dev server, load `/shop`, and confirm the new
-product renders with its real photo, price, and a working "Buy Now" link
-before considering the sync done.
+Start (or reuse) the dev server, load `/shop`, and confirm it now matches
+the live store exactly: every current product renders with its real
+photo, price, and a working "Buy Now" link, and nothing removed is still
+showing up.
 
 ## Step 7: Report
 
-Summarize what was added (or confirm nothing was new). Leave committing
-the changes to the user's normal workflow unless they've already
-established that you should commit/push automatically in this project.
+Summarize what was added and what was removed (or confirm the site
+already matched the store). Leave committing the changes to the user's
+normal workflow unless they've already established that you should
+commit/push automatically in this project.
