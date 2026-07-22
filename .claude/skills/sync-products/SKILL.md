@@ -1,6 +1,6 @@
 ---
 name: sync-products
-description: Use this skill whenever the user asks to sync, update, refresh, or check the shop/store/merchandise/products on this site, or mentions adding, removing, retiring, discontinuing, or deleting products in Printful/the Quick Store. Also trigger it proactively after the user says they've added or removed a product in the Printful dashboard (mcmgop.printful.me), even if they don't explicitly ask for the site to be updated. The whole point of this skill is that the user should never need to name the product or paste details themselves, in either direction -- it discovers both new and removed products by comparing the live Quick Store against src/data/products.js, adds whatever is new, and deletes whatever is gone.
+description: Use this skill whenever the user asks to sync, update, refresh, or check the shop/store/merchandise/products on this site, or mentions adding, removing, retiring, discontinuing, deleting, or redesigning products in Printful/the Quick Store. Also trigger it proactively after the user says they've added, removed, or changed the design/logo on a product in the Printful dashboard (mcmgop.printful.me), even if they don't explicitly ask for the site to be updated. The whole point of this skill is that the user should never need to name the product or paste details themselves, in any direction -- it discovers new products, removed products, AND products whose design/image changed while keeping the same listing, by comparing the live Quick Store against src/data/products.js.
 ---
 
 # Syncing the Printful Quick Store into the site
@@ -10,37 +10,56 @@ This project's merch section (`src/data/products.js`, rendered by
 Quick Store at `https://mcmgop.printful.me/` can't be reached through the
 Printful API (Quick Stores are excluded from it entirely -- confirmed by
 a direct 403 "Quick stores cannot use the API" response). So the only way
-to know what's actually for sale is to look at the live storefront, the
-same way a customer would.
+to know what's actually for sale, and what it currently looks like, is to
+look at the live storefront, the same way a customer would.
 
-## Step 1: List what's currently live on the store
+## Step 1: List what's currently live on the store, with a content fingerprint
 
 Navigate the browser to `https://mcmgop.printful.me/` and read the product
-grid. Each product tile has a name and links to a detail page at
-`https://mcmgop.printful.me/product/<slug>`. Collect every product's name
-and detail-page URL.
+grid with a script like:
+
+```js
+Array.from(document.querySelectorAll('a[href*="/product/"]'))
+  .filter((a, i, arr) => arr.findIndex(x => x.href === a.href) === i)
+  .map(a => ({ href: a.href, thumb: a.querySelector('img')?.src }))
+```
+
+Collect every product's detail-page URL **and** its listing thumbnail
+URL. The thumbnail URL matters as much as the link: Printful embeds a
+hash in it (e.g. `.../94411-1629-6a601e7f3200f__360`) that changes
+whenever the underlying design/mockup is regenerated, even if the
+product's name and URL slug stay exactly the same. This is the only
+signal that catches a case like "deleted the old design, uploaded a new
+logo to the same product listing" -- the URL alone won't tell you that
+happened.
 
 ## Step 2: Diff against what the site already has
 
-Read `src/data/products.js`. Each existing entry has a `buyUrl` pointing
-at one of these detail pages -- that's the reliable key to match on
-(names can be edited slightly; the URL slug won't change for the same
-product). The diff runs both directions:
+Read `src/data/products.js`. Each existing entry has a `buyUrl` (the
+reliable key -- names can be edited slightly, the slug won't change for
+the same product listing) and a `sourceThumb` (the thumbnail URL captured
+the last time this entry was synced). The diff has three outcomes, not
+two:
 
-- **New**: a store product whose detail-page URL isn't any entry's
-  `buyUrl` yet. Handled in Steps 3-5.
-- **Removed**: an entry in `products.js` whose `buyUrl` no longer
-  appears in the live product grid. It was deleted or unpublished in
-  Printful, so it should come out of the site too -- a customer clicking
-  "Buy Now" on something no longer for sale is worse than the product
-  just not being listed. Handled in Step 5a.
+- **New**: a store product whose `buyUrl` isn't any entry's `buyUrl` yet.
+  Handled in Steps 3-5.
+- **Changed**: an entry whose `buyUrl` matches a live product, but whose
+  live thumbnail URL no longer matches the stored `sourceThumb`. The
+  design was swapped without the listing itself being deleted and
+  recreated. This is easy to miss if you only check "does the URL still
+  exist" -- it does, but what's behind it isn't what's on the site
+  anymore. Handled the same way as New (Steps 3-5), except the existing
+  entry is updated in place rather than appended, and its `id`/`buyUrl`
+  stay the same.
+- **Removed**: an entry whose `buyUrl` no longer appears in the live
+  product grid at all. Handled in Step 5a.
 
-If the two lists already match exactly, say so and stop -- don't re-fetch
-or re-write products that are unaffected either way.
+If every entry's `buyUrl` and `sourceThumb` already match the live store
+exactly, say so and stop.
 
-## Step 3: Pull the details for each new product
+## Step 3: Pull the details for each new or changed product
 
-For each new product, navigate to its detail page and extract:
+For each new or changed product, navigate to its detail page and extract:
 
 - **Name** (page heading)
 - **Price** (shown as e.g. `$55.00` -- convert to integer cents for
@@ -96,12 +115,15 @@ image) so the combined output crosses the auto-save threshold.
 
 After decoding, read each saved image file back to confirm it's actually
 a valid image and not a leftover challenge page or a stale file from an
-earlier failed attempt at the same path.
+earlier failed attempt at the same path. For a **changed** product,
+overwrite the existing image files at their existing paths rather than
+inventing new filenames, so nothing orphaned is left behind.
 
-## Step 5: Add the product to `products.js`
+## Step 5: Add or update the product in `products.js`
 
-Append a new object to the `products` array, matching the shape of the
-existing entries:
+For a **new** product, append an object to the `products` array. For a
+**changed** product, edit its existing object in place -- same `id`,
+same `buyUrl`, refreshed everything else:
 
 ```js
 {
@@ -111,14 +133,18 @@ existing entries:
   priceCents: <price in cents>,
   colors: ["<color>", ...],   // omit if the product has no color options
   buyUrl: "https://mcmgop.printful.me/product/<slug>",
+  sourceThumb: "<the listing thumbnail URL from Step 1>",
   images: ["product-<slug>-1", "product-<slug>-2"],  // filenames without extension, matching imageFor() in Shop.jsx
 }
 ```
 
+`sourceThumb` is what makes Step 2 able to detect the next design change,
+so don't skip setting it just because it's not rendered anywhere.
+
 ## Step 5a: Remove products no longer on the store
 
 For each entry in `products.js` whose `buyUrl` didn't show up in Step 1's
-listing:
+listing at all:
 
 1. Remove that object from the `products` array.
 2. Delete its image files under `src/assets/images/` (the filenames are
@@ -137,12 +163,16 @@ second look at the store rather than trusting a single pass.
 
 Start (or reuse) the dev server, load `/shop`, and confirm it now matches
 the live store exactly: every current product renders with its real
-photo, price, and a working "Buy Now" link, and nothing removed is still
-showing up.
+photo, price, and a working "Buy Now" link; nothing removed is still
+showing up; and nothing changed is still showing its old image. A quick
+JS check across the rendered page (`document.querySelectorAll('#shop
+img')` filtered to `naturalWidth === 0`) catches broken images faster
+than eyeballing every card.
 
 ## Step 7: Report
 
-Summarize what was added and what was removed (or confirm the site
-already matched the store). Leave committing the changes to the user's
+Summarize what was added, what was updated in place because its design
+changed, and what was removed (or confirm the site already matched the
+store on all three counts). Leave committing the changes to the user's
 normal workflow unless they've already established that you should
 commit/push automatically in this project.
